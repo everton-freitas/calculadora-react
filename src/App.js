@@ -1,63 +1,52 @@
-import Input from './components/Input'
+import Input from './components/Input';
 import { Button, NumberButton, ImportantButton, BackButton } from './components/Button';
-import './App.css'
+import './App.css';
 
-import { Container, Content, Row } from "./styles";
+import { Container, Content, Row } from './styles';
 import { useState } from 'react';
-
-
 
 const App = () => {
   const [currentNumber, setCurrentNumber] = useState('0');
   const [firstNumber, setFirstNumber] = useState('0');
-  const [operation, SetOperation] = useState('');
-  const [isResultDisplayed, setIsResultDisplayed] = useState(false); // Adicionada variável de controle
+  const [operation, setOperation] = useState('');
+  const [isResultDisplayed, setIsResultDisplayed] = useState(false);
 
   const handleOnClear = () => {
     setCurrentNumber('0');
     setFirstNumber('0');
-    SetOperation('');
-    setIsResultDisplayed(false); // Resetar o estado de resultado exibido
+    setOperation('');
+    setIsResultDisplayed(false);
   };
 
   const handleAddNumber = (number) => {
     if (isResultDisplayed) {
-      // Se um resultado foi exibido, começar uma nova entrada
       setCurrentNumber(number);
       setIsResultDisplayed(false);
     } else {
-      setCurrentNumber((prev) => {
-        const cleanPrev = prev.replace(/\./g, ''); // Remover formatação
-        const newNumber = `${cleanPrev}${number}`;
-        return new Intl.NumberFormat('pt-BR').format(Number(newNumber));
-      });
+      if (number === '.' && currentNumber.includes('.')) return; // Impedir múltiplos pontos
+      setCurrentNumber((prev) => (prev === '0' ? number : prev + number));
     }
   };
 
   const handleRemoveLastDigit = () => {
     setCurrentNumber((prev) => {
-      // Remove os pontos temporariamente
-      const cleanNumber = prev.replace(/\./g, '');
-  
-      // Se o número tem apenas um caractere, retorna "0"
-      if (cleanNumber.length <= 1) {
-        return '0';
-      }
-  
-      // Remove o último caractere e reformatar o número
-      const updatedNumber = cleanNumber.slice(0, -1);
-      return new Intl.NumberFormat('pt-BR').format(Number(updatedNumber));
+      if (prev.length <= 1 || prev === '0') return '0';
+      return prev.slice(0, -1);
     });
   };
 
   const handleOperation = (op) => {
     if (operation && currentNumber !== '0') {
-      handleEquals(); // Completa a operação anterior antes de iniciar outra
+      handleEquals();
     }
     setFirstNumber(currentNumber);
     setCurrentNumber('0');
-    SetOperation(op);
+    setOperation(op);
     setIsResultDisplayed(false);
+  };
+
+  const handlePercentage = () => {
+    setCurrentNumber((prev) => String(Number(prev) / 100));
   };
 
   const handleEquals = () => {
@@ -74,26 +63,26 @@ const App = () => {
           result = Number(firstNumber) * Number(currentNumber);
           break;
         case '/':
-          result = Number(firstNumber) / Number(currentNumber);
+          result = Number(currentNumber) === 0 ? 'Erro' : Number(firstNumber) / Number(currentNumber);
           break;
         default:
           break;
       }
       setCurrentNumber(String(result));
       setFirstNumber('0');
-      SetOperation('');
-      setIsResultDisplayed(true); // Indicar que o resultado foi exibido
+      setOperation('');
+      setIsResultDisplayed(true);
     }
   };
 
   return (
     <Container>
       <Content>
-        <Input value={currentNumber} />
+        <Input value={new Intl.NumberFormat('pt-BR').format(Number(currentNumber))} />
         <Row>
           <ImportantButton label="CE" onClick={() => setCurrentNumber('0')} />
           <ImportantButton label="C" onClick={handleOnClear} />
-          <BackButton onClick={handleRemoveLastDigit}/>
+          <BackButton onClick={handleRemoveLastDigit} />
           <Button label="/" onClick={() => handleOperation('/')} />
         </Row>
         <Row>
@@ -115,9 +104,9 @@ const App = () => {
           <Button label="+" onClick={() => handleOperation('+')} />
         </Row>
         <Row>
-          <NumberButton label='%' onClick={() => handleAddNumber('%')} />
-          <NumberButton label="." onClick={() => handleAddNumber('.')} />
+          <NumberButton label="%" onClick={handlePercentage} />
           <NumberButton label="0" onClick={() => handleAddNumber('0')} />
+          <NumberButton label="," onClick={() => handleAddNumber('.')} />
           <ImportantButton label="=" onClick={handleEquals} />
         </Row>
       </Content>
